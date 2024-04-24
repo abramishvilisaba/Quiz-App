@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
+import { useNavigate, Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { updateQuestions } from "../slices/questionsSlice";
+import { updateSettings } from "../slices/settingsSlice";
+import { fetchTriviaQuestions } from "../utilities";
+
+import axios from "axios";
+
 const primaryColor = "#1E33A9";
 const primaryColorLight = "#212799";
 
@@ -74,18 +82,50 @@ const Label = styled.label`
 `;
 
 export default function QuizConfig() {
-    const [settings, setSettings] = useState({
-        category: "",
-        numberOfQuestions: 5,
-        difficulty: 1,
-        type: "",
-        time: "",
-    });
+    const categories = [
+        { id: 9, name: "General Knowledge" },
+        { id: 10, name: "Entertainment: Books" },
+        { id: 11, name: "Entertainment: Film" },
+        { id: 12, name: "Entertainment: Music" },
+        { id: 13, name: "Entertainment: Musicals & Theatres" },
+        { id: 14, name: "Entertainment: Television" },
+        { id: 15, name: "Entertainment: Video Games" },
+        { id: 16, name: "Entertainment: Board Games" },
+        { id: 17, name: "Science & Nature" },
+        { id: 18, name: "Science: Computers" },
+        { id: 19, name: "Science: Mathematics" },
+        { id: 20, name: "Mythology" },
+        { id: 21, name: "Sports" },
+        { id: 22, name: "Geography" },
+        { id: 23, name: "History" },
+        { id: 24, name: "Politics" },
+        { id: 25, name: "Art" },
+        { id: 26, name: "Celebrities" },
+        { id: 27, name: "Animals" },
+        { id: 28, name: "Vehicles" },
+        { id: 29, name: "Entertainment: Comics" },
+        { id: 30, name: "Science: Gadgets" },
+        { id: 31, name: "Entertainment: Japanese Anime & Manga" },
+        { id: 32, name: "Entertainment: Cartoon & Animations" },
+    ];
 
-    const arr = [1, 2, 3, 4, 5];
+    const types = ["multiple", "boolean"];
+
+    const difficulties = ["easy", "medium", "hard"];
+
+    const dispatch = useDispatch();
+    const settings = useSelector((state) => state.settings);
+    const navigate = useNavigate();
 
     const handleChange = (e) => {
-        setSettings({ ...settings, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        dispatch(updateSettings({ [name]: value }));
+    };
+
+    const handleCategoryChange = (e) => {
+        const { name, value } = e.target;
+        const category = categories.find((category) => category.name === value);
+        dispatch(updateSettings({ [name]: category }));
     };
 
     const SelectInput = ({ name, value, onChange, options, placeholder }) => (
@@ -102,76 +142,82 @@ export default function QuizConfig() {
     );
 
     return (
-        <>
-            <MainContainer>
-                <h2>QuizConfig</h2>
-                <Row>
-                    <InputContainer>
-                        <Label>category: {settings.category}</Label>
-                        <SelectInput
-                            name="category"
-                            value={settings.category}
-                            onChange={handleChange}
-                            options={arr}
-                            placeholder="Select Category"
-                        />
-                    </InputContainer>
-                    <InputContainer>
-                        <Label>Number of questions: {settings.numberOfQuestions}</Label>
-                        <InputRange
-                            name="numberOfQuestions"
-                            type="range"
-                            min="5"
-                            max="15"
-                            step="1"
-                            value={settings.numberOfQuestions}
-                            onInput={handleChange}
-                        />
-                    </InputContainer>
-                </Row>
-                <Row>
-                    <InputContainer>
-                        <Label>Difficulty: {settings.difficulty}</Label>
-                        <InputRange
-                            name="difficulty"
-                            type="range"
-                            min="1"
-                            max="5"
-                            step="1"
-                            value={settings.difficulty}
-                            onInput={handleChange}
-                        />
-                    </InputContainer>
-                    <InputContainer>
-                        <Label>Type: {settings.type}</Label>
-                        <SelectInput
-                            name="type"
-                            value={settings.type}
-                            onChange={handleChange}
-                            options={arr}
-                            placeholder="Select Type"
-                        />
-                    </InputContainer>
-                </Row>
-                <Row>
-                    <InputContainer>
-                        <Label>Time: {settings.time}</Label>
-                        <SelectInput
-                            name="time"
-                            value={settings.time}
-                            onChange={handleChange}
-                            options={["1m", "2m", "5m"]}
-                            placeholder="Select Time"
-                        />
-                    </InputContainer>
-                    <InputContainer>
-                        <Row>
-                            <Button onClick={() => console.log(settings)}>Start</Button>
-                            <Button>Results</Button>
-                        </Row>
-                    </InputContainer>
-                </Row>
-            </MainContainer>
-        </>
+        <MainContainer>
+            <h2>QuizConfig</h2>
+            <Row>
+                <InputContainer>
+                    <Label>category: {settings.category.name}</Label>
+                    <SelectInput
+                        name="category"
+                        value={settings.category.name}
+                        onChange={handleCategoryChange}
+                        options={categories.map((category) => category.name)}
+                        placeholder="Select Category"
+                    />
+                </InputContainer>
+                <InputContainer>
+                    <Label>Number of questions: {settings.numberOfQuestions}</Label>
+                    <InputRange
+                        name="numberOfQuestions"
+                        type="range"
+                        min="5"
+                        max="15"
+                        step="1"
+                        value={settings.numberOfQuestions}
+                        onInput={handleChange}
+                    />
+                </InputContainer>
+            </Row>
+            <Row>
+                <InputContainer>
+                    <Label>Difficulty: {settings.difficulty}</Label>
+                    <SelectInput
+                        name="difficulty"
+                        value={settings.difficulty}
+                        onChange={handleChange}
+                        options={difficulties}
+                        placeholder="Select Difficulty"
+                    />
+                </InputContainer>
+                <InputContainer>
+                    <Label>Type: {settings.type}</Label>
+                    <SelectInput
+                        name="type"
+                        value={settings.type}
+                        onChange={handleChange}
+                        options={types}
+                        placeholder="Select Type"
+                    />
+                </InputContainer>
+            </Row>
+            <Row>
+                <InputContainer>
+                    <Label>Time: {settings.time}</Label>
+                    <SelectInput
+                        name="time"
+                        value={settings.time}
+                        onChange={handleChange}
+                        options={["1m", "2m", "5m"]}
+                        placeholder="Select Time"
+                    />
+                </InputContainer>
+                <InputContainer>
+                    <Row>
+                        {/* <Link to={"/quiz"}> */}
+                        <Button
+                            onClick={() =>
+                                fetchTriviaQuestions(settings, dispatch, navigate, updateQuestions)
+                            }
+                        >
+                            Start
+                        </Button>
+                        {/* </Link> */}
+                        <Link to={"/statistics"}>
+                            <Button>Statistics</Button>
+                        </Link>
+                    </Row>
+                </InputContainer>
+            </Row>
+        </MainContainer>
     );
 }
