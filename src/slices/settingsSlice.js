@@ -7,7 +7,7 @@ export const settingsSlice = createSlice({
         numberOfQuestions: 5,
         difficulty: "easy",
         type: "",
-        time: "",
+        time: "5m",
     },
     reducers: {
         updateSettings(state, action) {

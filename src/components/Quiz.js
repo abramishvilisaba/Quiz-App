@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { updateResults } from "../slices/resultsSlice";
@@ -94,12 +94,32 @@ const Option = styled.div`
 export default function Quiz() {
     const [showModal, setShowModal] = useState(false);
     const [selectedAnswers, setSelectedAnswers] = useState({});
+    const [time, setTime] = useState(null);
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
     const settings = useSelector((state) => state.settings);
     const questions = useSelector((state) => state.questions);
+
+    useEffect(() => {
+        if (settings.time) {
+            const Seconds = parseInt(settings.time) * 60;
+            setTime(Seconds);
+
+            const timer = setInterval(() => {
+                setTime((prevTime) => {
+                    if (prevTime === 0) {
+                        handleConfirm();
+                        return 0;
+                    }
+                    return prevTime - 1;
+                });
+            }, 1000);
+
+            return () => clearInterval(timer);
+        }
+    }, [settings.time]);
 
     const handleEndQuiz = () => {
         setShowModal(true);
@@ -108,6 +128,7 @@ export default function Quiz() {
     const handleClose = () => {
         setShowModal(false);
     };
+
     const calculateResults = () => {
         const newResults = {};
 
@@ -118,6 +139,7 @@ export default function Quiz() {
                 newResults[i] = "false";
             }
         });
+
         return newResults;
     };
 
@@ -137,6 +159,14 @@ export default function Quiz() {
         });
     };
 
+    const formatTime = (seconds) => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+            .toString()
+            .padStart(2, "0")}`;
+    };
+
     if (!(settings && questions && questions.length > 0)) {
         return null;
     }
@@ -144,6 +174,8 @@ export default function Quiz() {
     return (
         <MainContainer>
             <h2>Quiz</h2>
+
+            <div>Time Left: {formatTime(time)}</div>
 
             {questions.map((questionData, index) => (
                 <QuestionContainer key={index}>
